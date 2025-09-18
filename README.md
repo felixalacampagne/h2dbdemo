@@ -22,3 +22,7 @@ Note also the way of inserting multiple without needing to specify the column na
 if this is a special H2 format but it might make exporting the Access data easier although the Google choice for doing
 this is using CSV.
 
+UCanAccess may have a way to export data as CSV. It requires use of the ucanaccess command line tool: https://ucanaccess.sourceforge.net/site.html#clients which in turn seems to rely on a script called console.bat in order to run. Trying to use the maven jar file didn't work.
+
+Not sure about importing the CSV into H2.
+
