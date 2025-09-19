@@ -6,7 +6,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Import;
 
 @SpringBootApplication
-@Import({RepositoryConfig.class})
+
 public class MainTest {
      public static void main(String[] args) {
          SpringApplication.run(MainTest.class, args);

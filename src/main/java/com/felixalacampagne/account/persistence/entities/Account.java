@@ -22,7 +22,11 @@ public class Account implements Serializable {
    public static final String ACCOUNT_ALLACTIVE = "Account.findActive";
    private static final long serialVersionUID = 1L;
 
-   @Id
+   // WARNING: columns names have been changed to more readable names, entity properties are the same as for account
+
+   // Actually changing the column names is a bad idea if the idea is to import table data generated
+   // by an export from the Access DB as the import data will have the wrong names. Probably not
+   // hard to edit the import files - the sequence update needs to be added anyway.
 
    // Identity works fine for starting from an empty DB however the HS DB will need
    // to be populated with records where the ID is already set, and is referenced as a foreign key
@@ -35,41 +39,41 @@ public class Account implements Serializable {
    // The issue arises when a new record is added after the import when the auto-id will need to be
    // greater than the max. value in the imported data.
 
-   // Maybe could drop and recreate the the sequence with the max id?
+   // Maybe could drop and recreate the sequence with the max id? This can be done in the data.sql
 
 
    // @GeneratedValue(strategy=GenerationType.IDENTITY)
-
+   @Id
    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "account_seq_gen")
    @SequenceGenerator(initialValue = 1, name = "account_seq_gen", sequenceName = "account_seq", allocationSize = 1)
-   @Column(name="acc_id")
+   @Column(name="id")             // acc_id
    private Long accId;
 
-   @Column(name="acc_addr")
+   @Column(name="address")        // acc_addr
    private String accAddr;
 
-   @Column(name="acc_code")
+   @Column(name="code")           // acc_code
    private String accCode;
 
-   @Column(name="acc_curr")
+   @Column(name="currency")       // acc_curr
    private String accCurr;
 
-   @Column(name="acc_desc")
+   @Column(name="description")    // acc_desc
    private String accDesc;
 
-   @Column(name="acc_fmt")
+   @Column(name="currencyformat") // acc_fmt
    private String accFmt;
 
-   @Column(name="acc_order")
+   @Column(name="ranking")        // acc_order : 'order' can't be used as it's an sql keyword
    private Long accOrder;
 
-   @Column(name="acc_sid")
+   @Column(name="statementref")   // acc_sid
    private String accSid;
 
-   @Column(name="acc_swiftbic")
+   @Column(name="swiftbic")       // acc_swiftbic
    private String accSwiftbic;
 
-   @Column(name="acc_tel")
+   @Column(name="contact")        // acc_tel : could be a URL or email
    private String accTel;
 
    public Account() {
