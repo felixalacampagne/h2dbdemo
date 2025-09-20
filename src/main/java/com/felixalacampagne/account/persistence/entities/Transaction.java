@@ -58,7 +58,7 @@ public class Transaction implements Serializable
    @Column(name="credit")                         // Credit
    private BigDecimal credit;
 
-   @Column(name="date")                           // Date
+   @Column(name="transactiondate")                           // Date
    private LocalDate date;
 
    @Column(name="debit")                          // Debit
