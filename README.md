@@ -23,8 +23,8 @@ if this is a special H2 format but it might make exporting the Access data easie
 this is using CSV.
 
 UCanAccess may have a way to export data as CSV. It requires use of the ucanaccess command line tool: https://ucanaccess.sourceforge.net/site.html#clients which in turn seems to rely on a script called console.bat in order to run. Trying to use the maven jar file didn't work.
-
 console.bat in the download zip is different to the one in github. It contains the following
+
 ```
 @echo off
 set PATH=%PATH%;.
@@ -46,19 +46,18 @@ if exist %LOCAL_HOME_JAVA%\bin\java.exe (
 %LOCAL_JAVA% -version
 @echo.
 
-SET CLASSPATH="%UCANACCESS_HOME%\lib\hsqldb-2.5.0.jar;%UCANACCESS_HOME%\lib\jackcess-3.0.1.jar;%UCANACCESS_HOME%\lib\commons-lang3-3.8.1.jar;%UCANACCESS_HOME%\lib\commons-logging-1.2.jar;%UCANACCESS_HOME%\ucanaccess-5.0.1.jar"
+SET CLASSPATH="%UCANACCESS_HOME%\lib\hsqldb-2.7.3.jar;%UCANACCESS_HOME%\lib\jackcess-4.0.5.jar;%UCANACCESS_HOME%\lib\commons-lang3-3.14.0.jar;%UCANACCESS_HOME%\lib\commons-logging-1.2.jar;%UCANACCESS_HOME%\ucanaccess-5.1.1.jar"
 
 %LOCAL_JAVA% -classpath %CLASSPATH% net.ucanaccess.console.Main
 pause
 
 ```
 
-The lib sub-directory contains
-lib\commons-logging-1.2.jar
-lib\hsqldb-2.5.0.jar
-lib\jackcess-3.0.1.jar
-lib\commons-lang3-3.8.1.jar
-
+For ucanaccess-5.1.1 the lib sub-directory must contain:
+ - commons-logging-1.2.jar
+ - (org/hsqldb) hsqldb-2.7.3.jar
+ - (com/healthmarketscience) jackcess-4.0.5.jar
+ - (org/apache/commons) commons-lang3-3.14.0.jar
 
 Obviously migrating the data from Access to H2 using CSV is not as straight forward as it should be, mainly because
 the documentation leaves out certain fundamental bits of information, presumably so some consultant somewhere can
@@ -69,6 +68,10 @@ by the documentation, and running it does connect to the database. Exporting the
 
 export -t account ./account.csv;
 export -t transaction ./transaction.csv;
+export -t standingorders ./standingorders.csv;
+export -t PhoneAccounts ./phoneaccount.csv;
+export -t PhoneTrans ./phonetransaction.csv;
+export -t Prefs ./prefs.csv;
 
 The column headers need to be modified to match the new column names.
 
@@ -88,13 +91,10 @@ since it is so blindly not obvious that the information must be duplicated.
 
 So the eventual command to the account was;
 
-insert into account (id,code,description,address,contact,currency,currencyformat,statementref,ranking,swiftbic) SELECT * FROM CSVREAD('C:/Development/workspace/h2dbdemo/src/test/resources/csv/account_h2cols.csv', null,  'charset=UTF-8 fieldSeparator=;');
+    insert into account (id,code,description,address,contact,currency,currencyformat,statementref,ranking,swiftbic) 
+    SELECT * FROM CSVREAD('src/test/resources/csv/account_h2cols.csv', null, 'charset=UTF-8 fieldSeparator=;');
 
-Similarly for transaction
-insert into transaction (id,accountid,transactiondate,type,comment,checked,credit,debit,balance,checkedbalance,sortedbalance,statementref) 
-SELECT * FROM CSVREAD('C:/Development/workspace/h2dbdemo/src/test/resources/csv/transaction_h2cols.csv', null,  'charset=UTF-8 fieldSeparator=;');
-
-Needless to say it did not work without issue. The dates in the exported CSV are not compatible with the date column
+Needless to say transaction did not work without issue. The dates in the exported CSV are not compatible with the date column
 type created via the entity - the time part must be removed. For some weird reason the time part is not always 00:00:00
 which means a regex must be used for the removal. Once the date is fixed the import seems to be OK.
 
@@ -106,4 +106,40 @@ additional duplication of the column names with something like
 for the date column - something to try... need to check the format etc.
 
 WARNING: using 'date' as the column name is going to cause all sorts of grief because 'DATE' is an 
-SQL keyword (like 'ORDER' is). So better change it to something transactiondate
+SQL keyword (like 'ORDER' is). So better change it to something transactiondate - likewise for 'type'.
+
+    insert into transaction (id,accountid,transactiondate,transactiontype,comment,checked,credit,debit,balance,checkedbalance,sortedbalance,statementref) 
+    SELECT id,accountid, cast(parsedatetime(transactiondate, 'yyyy-MM-dd HH:mm:ss') as date) as transactiondate, type,comment,checked,credit,debit,balance,checkedbalance,sortedbalance,statementref 
+    FROM CSVREAD('src/test/resources/csv/transaction_h2cols.csv', null,  'charset=UTF-8 fieldSeparator=;');
+
+Standingorder contains dates:
+
+    insert into standingorder (id  ,period  ,count  ,paydate      ,entrydate  ,comment,accountid,transactiontype,amount) 
+    SELECT id  ,period  ,count  ,
+    cast(parsedatetime(paydate, 'yyyy-MM-dd HH:mm:ss') as date) as paydate,
+    cast(parsedatetime(entrydate, 'yyyy-MM-dd HH:mm:ss') as date) as entrydate,
+    comment,accountid,transactiontype,amount
+    FROM CSVREAD('src/test/resources/csv/standingorders_h2cols.csv', null,  'charset=UTF-8 fieldSeparator=;');
+
+phoneaccount contains obsolete columns:
+
+    insert into phoneaccount (id  ,accounttype,accountid,code    ,comment,ranking,communication) 
+    SELECT id  ,accounttype,accountid,code    ,comment,ranking,communication FROM CSVREAD('src/test/resources/csv/phoneaccount_h2cols.csv', null, 'charset=UTF-8 fieldSeparator=;');
+
+phonetransaction contains null dates as '(null)' which causes an issue with the date parsing:
+
+    insert into phonetransaction (id  ,paydate  ,senderphoneaccountid,recipientphoneaccountid,amount  ,communication,comment,sentdate  ,transactiondate,errorstatus) 
+    SELECT id  ,
+    cast(parsedatetime(paydate, 'yyyy-MM-dd HH:mm:ss') as date) as paydate,
+    senderphoneaccountid,recipientphoneaccountid,amount  ,communication,comment,
+    cast(parsedatetime(sentdate, 'yyyy-MM-dd HH:mm:ss') as date) as sentdate,
+    cast(parsedatetime(transactiondate, 'yyyy-MM-dd HH:mm:ss') as date) as transactiondate,
+    errorstatus 
+    FROM CSVREAD('src/test/resources/csv/phonetransaction_h2cols.csv', null, 'charset=UTF-8 fieldSeparator=; null=(null)');
+
+prefs in Access does not have an id column but H2 will have an ID which needs to be supplied automatically
+when the CSV is imported. It appears that this does NOT happen when the generation strategy is SEQUENCE but 
+can be provided via the select statement by querying the next sequence value (NB. NEXT VALUE FOR does not work):
+
+    insert into prefs (id, name,text,numeric) 
+    SELECT (select nextval('prefs_seq') ) as id, name,text,numeric FROM CSVREAD('src/test/resources/csv/prefs_h2cols.csv', null, 'charset=UTF-8 fieldSeparator=; null=(null)');
