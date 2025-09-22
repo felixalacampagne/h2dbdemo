@@ -10,6 +10,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 
@@ -17,9 +19,12 @@ import jakarta.persistence.Table;
 /**
  * The persistent class for the "transaction" database table.
  *
+ * To map Access CSV to H2 CSV columns
+ * sequence;AccountId;Date           ;Type           ;Comment;Checked;Credit;Debit;Balance;CheckedBalance;SortedBalance;Stid
+ * id     ;accountid ;transactiondate;transactiontype;comment;checked;credit;debit;balance;checkedbalance;sortedbalance;statementref
  */
 @Entity
-@Table(name="Transaction")
+@Table(name="transaction")
 public class Transaction implements Serializable
 {
 //   public static final String TRANSACTION_ALLFORACCOUNT="Transaction.findByAccountId";
@@ -39,9 +44,21 @@ public class Transaction implements Serializable
    @Column(name="id")                             // sequence
    private long sequence;
 
-   // Spring JPA seems to be putting underscores into the column names: needs a setting in application.properties to stop the underscores
+   // Access version just uses a simple long with no attempt to make the relationship
+   // I was going to keep the same for H2 except that standingorder is using an
+   // 'official' many2one relationship so I figured why not do the same with
+   // transaction. This will require some changes to retrieve the account id but
+   // maybe that can be done via a method in here...
+   //
+   // Alas changing to ManyToOne requires re-writing the queries which are generally using the
+   // query-from-the-method-name feature which in turn means all code using the queries will need to
+   // be changed - in addition the account id must be converted to an account object for all of the
+   // queries which is likely to be impractical unless someway to specify the account id can be found.
    @Column(name="accountid")                      // AccountId
-   private Long accountId;     // This could use one-2-many etc. but it is not used (it doesn't work unless many hoops are surmounted)
+   private Long accountId;
+//    @ManyToOne
+//    @JoinColumn(name = "accountid", nullable = false) // SOAccId
+//    private Account account;
 
    @Column(name="balance")                        // Balance
    private BigDecimal balance;
@@ -70,7 +87,7 @@ public class Transaction implements Serializable
    @Column(name="statementref")                   // Stid
    private String stid;
 
-   @Column(name="type")                           // Type
+   @Column(name="transactiontype")                           // Type
    private String type;
 
    public Transaction() {
@@ -102,6 +119,14 @@ public class Transaction implements Serializable
    public void setSequence(long sequence) {
       this.sequence = sequence;
    }
+
+   // public Account getAccount() {
+   //    return this.account;
+   // }
+   //
+   // public void setAccount(Account account) {
+   //    this.account = account;
+   // }
 
    public Long getAccountId() {
       return this.accountId;
