@@ -14,6 +14,9 @@ import jakarta.persistence.Table;
 
 /**
  * The persistent class for the "account" database table.
+ * To map Access CSV to H2 CSV columns
+ * acc_id;acc_code;acc_desc   ;acc_addr;acc_tel;acc_curr;acc_fmt       ;acc_sid     ;acc_order;acc_swiftbic
+ * id    ;code    ;description;address ;contact;currency;currencyformat;statementref;ranking  ;swiftbic
  *
  */
 @Entity
