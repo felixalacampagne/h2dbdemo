@@ -107,10 +107,11 @@ for the date column - something to try... need to check the format etc.
 
 WARNING: using 'date' as the column name is going to cause all sorts of grief because 'DATE' is an 
 SQL keyword (like 'ORDER' is). So better change it to something transactiondate - likewise for 'type'.
+Test DB contains transactions with null account id - such entries must be removed or fixed.
 
     insert into transaction (id,accountid,transactiondate,transactiontype,comment,checked,credit,debit,balance,checkedbalance,sortedbalance,statementref) 
-    SELECT id,accountid, cast(parsedatetime(transactiondate, 'yyyy-MM-dd HH:mm:ss') as date) as transactiondate, type,comment,checked,credit,debit,balance,checkedbalance,sortedbalance,statementref 
-    FROM CSVREAD('src/test/resources/csv/transaction_h2cols.csv', null,  'charset=UTF-8 fieldSeparator=;');
+    SELECT id,accountid, cast(parsedatetime(transactiondate, 'yyyy-MM-dd HH:mm:ss') as date) as transactiondate, transactiontype,comment,checked,credit,debit,balance,checkedbalance,sortedbalance,statementref 
+    FROM CSVREAD('src/test/resources/csv/transaction_h2cols.csv', null,  'charset=UTF-8 fieldSeparator=;  null=(null)');
 
 Standingorder contains dates:
 
@@ -121,10 +122,10 @@ Standingorder contains dates:
     comment,accountid,transactiontype,amount
     FROM CSVREAD('src/test/resources/csv/standingorders_h2cols.csv', null,  'charset=UTF-8 fieldSeparator=;');
 
-phoneaccount contains obsolete columns:
+phoneaccount contains obsolete columns, account id=0 must be converted to null to avoid constraint violation:
 
     insert into phoneaccount (id  ,accounttype,accountid,code    ,comment,ranking,communication) 
-    SELECT id  ,accounttype,accountid,code    ,comment,ranking,communication FROM CSVREAD('src/test/resources/csv/phoneaccount_h2cols.csv', null, 'charset=UTF-8 fieldSeparator=;');
+    SELECT id  ,accounttype, NULLIF(accountid, 0) ,code    ,comment,ranking,communication FROM CSVREAD('src/test/resources/csv/phoneaccount_h2cols.csv', null, 'charset=UTF-8 fieldSeparator=;');
 
 phonetransaction contains null dates as '(null)' which causes an issue with the date parsing:
 
@@ -143,3 +144,11 @@ can be provided via the select statement by querying the next sequence value (NB
 
     insert into prefs (id, name,text,numeric) 
     SELECT (select nextval('prefs_seq') ) as id, name,text,numeric FROM CSVREAD('src/test/resources/csv/prefs_h2cols.csv', null, 'charset=UTF-8 fieldSeparator=; null=(null)');
+
+Now I have modified the entities to have ManyToOne relationships, ie. Transaction, PhoneAccount etc. have an Account object
+instead of an accountid. This impacts the queries, especially the Method Derived Queries, although I think I've avoided
+many problems by renaming the Account id field. This is the kind of thing that needs to be done in the real account
+project so that method renames can be refactored automatically in the whole code. 
+
+I guess I should do some test queries to make sure it works like I think it should. For that I will need to persist the DB, 
+unless I can put the CSV inserts into the data.sql - I can!

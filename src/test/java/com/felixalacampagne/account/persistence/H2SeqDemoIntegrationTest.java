@@ -11,23 +11,25 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.test.context.ActiveProfiles;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest(classes = {MainTest.class})
 @Configuration
-
+@ActiveProfiles("test")
 public class H2SeqDemoIntegrationTest {
 
 private static final Logger log = LoggerFactory.getLogger(H2SeqDemoIntegrationTest.class);
 
 
 @Autowired
-AccountJpaRepository acountJpaRepository;
+AccountJpaRepository accountJpaRepository;
 
 @Autowired
 TransactionJpaRepository transactionJpaRepository;
@@ -42,12 +44,12 @@ TransactionJpaRepository transactionJpaRepository;
       acc.setAccCurr("EUR");
       acc.setAccFmt("#,###.00");
 
-      acc = acountJpaRepository.save(acc);
-      acountJpaRepository.flush();
+      acc = accountJpaRepository.save(acc);
+      accountJpaRepository.flush();
 
       log.info("addAccountAfterPopulationFromDataSQL: new acc: {}", acc);
 
-      List<Account> all = acountJpaRepository.findAll();
+      List<Account> all = accountJpaRepository.findAll();
       log.info("addAccountAfterPopulationFromDataSQL: Account count: {}", all.size());
    }
 
@@ -57,7 +59,12 @@ TransactionJpaRepository transactionJpaRepository;
       long txncount = transactionJpaRepository.countByAccountId(1);
 
       Transaction tosave = new Transaction();
-      tosave.setAccountId(1L);
+
+      List<Account> accs = accountJpaRepository.findAll();
+
+      Account acc = accs.getFirst(); // acountJpaRepository.findAll().getFirst();
+
+      tosave.setAccount(acc);
       tosave.setDate(LocalDate.now());
       tosave.setType("TEST");
       tosave.setComment("This is a test");
@@ -72,5 +79,19 @@ TransactionJpaRepository transactionJpaRepository;
       long newid = saved.getSequence();
       System.out.println("new id is " + newid);
       log.info("testSave: transaction saved");
+   }
+
+   @Test
+   void transactionFindByAccountId()
+   {
+
+      Account acc = this.accountJpaRepository.findAll().getLast();
+      assertTrue(transactionJpaRepository.countByAccountId(acc.getId()) > 0, "Should be some transaction for account: " + acc.getId());
+
+      List<Transaction> txns = transactionJpaRepository.findByAccountIdOrderByDateAscSequenceAsc(acc.getId());
+      log.info("transactionFindByAccountId: account:{}", acc);
+      log.info("transactionFindByAccountId: first txn:{}", txns.getFirst());
+      log.info("transactionFindByAccountId: account in txn:{}", txns.getFirst().getAccount());
+
    }
 }

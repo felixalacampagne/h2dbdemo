@@ -54,11 +54,11 @@ public class Transaction implements Serializable
    // query-from-the-method-name feature which in turn means all code using the queries will need to
    // be changed - in addition the account id must be converted to an account object for all of the
    // queries which is likely to be impractical unless someway to specify the account id can be found.
-   @Column(name="accountid")                      // AccountId
-   private Long accountId;
-//    @ManyToOne
-//    @JoinColumn(name = "accountid", nullable = false) // SOAccId
-//    private Account account;
+   // @Column(name="accountid")                      // AccountId
+   // private Long accountId;
+   @ManyToOne
+   @JoinColumn(name = "accountid", nullable = false) // SOAccId
+   private Account account;
 
    @Column(name="balance")                        // Balance
    private BigDecimal balance;
@@ -98,7 +98,7 @@ public class Transaction implements Serializable
       StringBuilder sb = new StringBuilder();
       sb.append(this.getClass().getSimpleName());
       sb.append(" sequence:").append(sequence);
-      sb.append(" accountId:").append(accountId);
+      sb.append(" accountId:").append(account.getAccId());
       sb.append(" balance:").append(balance);
       sb.append(" checked:").append(checked);
       sb.append(" checkedBalance:").append(checkedBalance);
@@ -120,21 +120,21 @@ public class Transaction implements Serializable
       this.sequence = sequence;
    }
 
-   // public Account getAccount() {
-   //    return this.account;
+   public Account getAccount() {
+      return this.account;
+   }
+
+   public void setAccount(Account account) {
+      this.account = account;
+   }
+
+   // public Long getAccountId() {
+   //    return this.accountId;
    // }
    //
-   // public void setAccount(Account account) {
-   //    this.account = account;
+   // public void setAccountId(Long accountId) {
+   //    this.accountId = accountId;
    // }
-
-   public Long getAccountId() {
-      return this.accountId;
-   }
-
-   public void setAccountId(Long accountId) {
-      this.accountId = accountId;
-   }
 
    public BigDecimal getBalance() {
       return this.balance;
@@ -219,7 +219,7 @@ public class Transaction implements Serializable
    @Override
    public int hashCode()
    {
-      return Objects.hash(accountId, balance, checked, checkedBalance, comment, credit, date, debit, sequence, sortedBalance, stid, type);
+      return Objects.hash(account.getAccId(), balance, checked, checkedBalance, comment, credit, date, debit, sequence, sortedBalance, stid, type);
    }
 
    @Override
@@ -232,7 +232,7 @@ public class Transaction implements Serializable
       if (getClass() != obj.getClass())
          return false;
       Transaction other = (Transaction) obj;
-      return Objects.equals(accountId, other.accountId) && Objects.equals(balance, other.balance) && checked == other.checked && Objects.equals(checkedBalance, other.checkedBalance) && Objects.equals(comment, other.comment)
+      return Objects.equals(account.getAccId(), other.account.getAccId()) && Objects.equals(balance, other.balance) && checked == other.checked && Objects.equals(checkedBalance, other.checkedBalance) && Objects.equals(comment, other.comment)
             && Objects.equals(credit, other.credit) && Objects.equals(date, other.date) && Objects.equals(debit, other.debit) && sequence == other.sequence && Objects.equals(sortedBalance, other.sortedBalance)
             && Objects.equals(stid, other.stid) && Objects.equals(type, other.type);
    }

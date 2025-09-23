@@ -17,7 +17,6 @@ import jakarta.persistence.Table;
  * To map Access CSV to H2 CSV columns
  * acc_id;acc_code;acc_desc   ;acc_addr;acc_tel;acc_curr;acc_fmt       ;acc_sid     ;acc_order;acc_swiftbic
  * id    ;code    ;description;address ;contact;currency;currencyformat;statementref;ranking  ;swiftbic
- *
  */
 @Entity
 @Table(name="account")
@@ -50,7 +49,7 @@ public class Account implements Serializable {
    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "account_seq_gen")
    @SequenceGenerator(initialValue = 1, name = "account_seq_gen", sequenceName = "account_seq", allocationSize = 1)
    @Column(name="id")             // acc_id
-   private Long accId;
+   private Long id;
 
    @Column(name="address")        // acc_addr
    private String accAddr;
@@ -85,7 +84,7 @@ public class Account implements Serializable {
    public String toString() {
       StringBuilder sb = new StringBuilder();
       sb.append(this.getClass().getName());
-      sb.append(" accId:").append(accId);
+      sb.append(" accId:").append(id);
       sb.append(" accAddr:").append(accAddr);
       sb.append(" accCode:").append(accCode);
       sb.append(" accCurr:").append(accCurr);
@@ -98,13 +97,22 @@ public class Account implements Serializable {
       return sb.toString();
     }
 
-   public Long getAccId() {
-      return this.accId;
+   public Long getAccId() {  // for backward compatibility
+      return this.id;
    }
 
-   public void setAccId(Long accId) {
-      this.accId = accId;
+   public void setAccId(Long accId) {  // for backward compatibility
+      this.id = accId;
    }
+
+   public Long getId() {
+      return this.id;
+   }
+
+   public void setId(Long accId) {
+      this.id = accId;
+   }
+
 
    public String getAccAddr() {
       return this.accAddr;
@@ -180,7 +188,7 @@ public class Account implements Serializable {
    @Override
    public int hashCode()
    {
-      return Objects.hash(accAddr, accCode, accCurr, accDesc, accFmt, accId, accOrder, accSid, accSwiftbic, accTel);
+      return Objects.hash(accAddr, accCode, accCurr, accDesc, accFmt, id, accOrder, accSid, accSwiftbic, accTel);
    }
    @Override
    public boolean equals(Object obj)
@@ -193,7 +201,7 @@ public class Account implements Serializable {
          return false;
       Account other = (Account) obj;
       return Objects.equals(accAddr, other.accAddr) && Objects.equals(accCode, other.accCode) && Objects.equals(accCurr, other.accCurr) && Objects.equals(accDesc, other.accDesc) && Objects.equals(accFmt, other.accFmt)
-            && Objects.equals(accId, other.accId) && Objects.equals(accOrder, other.accOrder) && Objects.equals(accSid, other.accSid) && Objects.equals(accSwiftbic, other.accSwiftbic) && Objects.equals(accTel, other.accTel);
+            && Objects.equals(id, other.id) && Objects.equals(accOrder, other.accOrder) && Objects.equals(accSid, other.accSid) && Objects.equals(accSwiftbic, other.accSwiftbic) && Objects.equals(accTel, other.accTel);
    }
 
 

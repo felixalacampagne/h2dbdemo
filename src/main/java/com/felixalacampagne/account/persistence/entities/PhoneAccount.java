@@ -8,6 +8,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 
@@ -36,24 +38,18 @@ public class PhoneAccount implements Serializable
    @Column(name="id")
    private Long Id;
 
-//   @Column(name = "PAAccessCode", nullable = true)
-//   private String accessCode; // No longer relevant. I think this was the
-//                              // password for the CBC phone banking
-
-   @Column(name = "accountid", nullable = true)   // PAaccid
-   private Long accountId; // The related account in Account table, if any.
+   // @Column(name = "accountid", nullable = true)   // PAaccid
+   // private Long accountId;
+   @ManyToOne
+   @JoinColumn(name = "accountid", nullable = true)  // PAaccid
+   private Account account; // The related account in Account table, if any.
                            // Presence indicates transfer between account is
                            // required.
-
    @Column(name = "comment")                       // PAdesc
    private String desc;
 
    @Column(name = "communication")                 // PALastComm
    private String lastComm;
-
-//   @Column(name = "PAmaster", nullable = true)
-//   private Integer master; // No longer relevant, was used to indicate which
-//                           // accounts worked with CBC phone banking
 
    @Column(name = "code")                      // PAnumber
    private String accountNumber;
@@ -61,10 +57,6 @@ public class PhoneAccount implements Serializable
    @Column(name = "ranking")                   // PAorder
    private Integer order; // Used to determine the order in the list of the
                           // entries, to put 'my' accounts on top
-
-//   @Column(name = "PASWIFTBIC", nullable = true)
-//   private String bic; // No longer required, was previously needed with IBAN
-//                       // account numbers
 
    // C: Current account - a CBC Phone account that can make transfers to
    // non-CBC accounts
@@ -98,14 +90,12 @@ public class PhoneAccount implements Serializable
       StringBuilder sb = new StringBuilder();
       sb.append(this.getClass().getSimpleName());
       sb.append(" Id:").append(Id);
-      sb.append(" accountId:").append(accountId);
+      sb.append(" accountId:").append(account==null ? "null": account.getId());
       sb.append(" type:").append(type);
-      // sb.append(" master:").append(master);
       sb.append(" order:").append(order);
       sb.append(" desc:").append(desc);
       sb.append(" lastComm:").append(lastComm);
       sb.append(" accountNumber:").append(accountNumber);
-      // sb.append(" accessCode:").append(accessCode);
       return sb.toString();
    }
 
@@ -123,24 +113,26 @@ public class PhoneAccount implements Serializable
       this.Id = Id;
    }
 
-//   public String getAccessCode()
-//   {
-//      return this.accessCode;
-//   }
-//
-//   public void setAccessCode(String accessCode)
-//   {
-//      this.accessCode = accessCode;
-//   }
+   // Presence of getAccountId confuses the spring conversion of method names to queries so
+   // xxxByAccountId is incorrectly interpreted as a field called accountId instead of account.id
+   // public Long getAccountId()
+   // {
+   //    return account==null ? 0: account.getId(); //this.accountId;
+   // }
 
-   public Long getAccountId()
+   // public void setAccountId(Long accountId)
+   // {
+   //    this.accountId = accountId;
+   // }
+
+   public Account getAccount()
    {
-      return this.accountId;
+      return this.account;
    }
 
-   public void setAccountId(Long accountId)
+   public void setAccount(Account account)
    {
-      this.accountId = accountId;
+      this.account = account;
    }
 
    public String getDesc()
@@ -163,16 +155,6 @@ public class PhoneAccount implements Serializable
       this.lastComm = lastComm;
    }
 
-//   public int getMaster()
-//   {
-//      return this.master == null ? 0 : this.master;
-//   }
-//
-//   public void setMaster(int master)
-//   {
-//      this.master = master;
-//   }
-
    public String getAccountNumber()
    {
       return this.accountNumber;
@@ -193,16 +175,6 @@ public class PhoneAccount implements Serializable
       this.order = order;
    }
 
-//   public String getBic()
-//   {
-//      return this.bic;
-//   }
-//
-//   public void setBic(String bic)
-//   {
-//      this.bic = bic;
-//   }
-
    public String getType()
    {
       return this.type;
@@ -216,7 +188,7 @@ public class PhoneAccount implements Serializable
    @Override
    public int hashCode()
    {
-      return Objects.hash(Id, accountId, accountNumber, desc, lastComm, order, type);
+      return Objects.hash(Id, account, accountNumber, desc, lastComm, order, type);
    }
 
    @Override
@@ -229,7 +201,7 @@ public class PhoneAccount implements Serializable
       if (getClass() != obj.getClass())
          return false;
       PhoneAccount other = (PhoneAccount) obj;
-      return Objects.equals(Id, other.Id) && Objects.equals(accountId, other.accountId) && Objects.equals(accountNumber, other.accountNumber) && Objects.equals(desc, other.desc) && Objects.equals(lastComm, other.lastComm)
+      return Objects.equals(Id, other.Id) && Objects.equals(account, other.account) && Objects.equals(accountNumber, other.accountNumber) && Objects.equals(desc, other.desc) && Objects.equals(lastComm, other.lastComm)
             && Objects.equals(order, other.order) && Objects.equals(type, other.type);
    }
 
